@@ -1,0 +1,63 @@
+name: Bug report
+description: Report a reproducible d2-mcp-rs problem.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Minimal steps, MCP call, or D2 source that reproduces the problem. Do not include secrets or private diagrams.
+      placeholder: |
+        1. Configure ...
+        2. Call ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: d2_mcp_version
+    attributes:
+      label: d2-mcp-rs version or commit
+      placeholder: "0.1.0 or commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: d2_version
+    attributes:
+      label: D2 version
+      placeholder: "d2 --version"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Linux / macOS / Windows"
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Paste redacted diagnostics only. Do not include tokens, private paths that should stay private, or credential-bearing configs.
+    validations:
+      required: false

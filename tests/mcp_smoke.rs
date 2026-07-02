@@ -41,8 +41,10 @@ async fn d2_mcp_surface_smoke() -> anyhow::Result<()> {
     let client = SmokeClient.serve(client_transport).await?;
     let tools = client.list_tools(Default::default()).await?;
     let tool_names: Vec<_> = tools.tools.iter().map(|tool| tool.name.as_ref()).collect();
-    assert_eq!(tool_names.len(), 4);
+    assert_eq!(tool_names.len(), 6);
     assert!(tool_names.contains(&"d2_status"));
+    assert!(tool_names.contains(&"d2_layouts"));
+    assert!(tool_names.contains(&"d2_themes"));
     assert!(tool_names.contains(&"d2_validate"));
     assert!(tool_names.contains(&"d2_format"));
     assert!(tool_names.contains(&"d2_render"));
@@ -63,6 +65,28 @@ async fn d2_mcp_surface_smoke() -> anyhow::Result<()> {
     assert_eq!(status_body["status"], "ready");
     assert_eq!(status_body["reads_arbitrary_files"], false);
     assert_eq!(status_body["writes_outside_workdir"], false);
+
+    let layouts = client
+        .call_tool(CallToolRequestParams::new("d2_layouts"))
+        .await?;
+    assert_eq!(layouts.is_error, Some(false));
+    assert!(
+        structured(&layouts)["items_text"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("dagre")
+    );
+
+    let themes = client
+        .call_tool(CallToolRequestParams::new("d2_themes"))
+        .await?;
+    assert_eq!(themes.is_error, Some(false));
+    assert!(
+        structured(&themes)["items_text"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("Neutral Default")
+    );
 
     let render = client
         .call_tool(

@@ -1,0 +1,26 @@
+title: D2 MCP agent diagram loop
+direction: right
+
+user: User
+agent: MCP client
+server: {
+  label: d2-mcp-rs
+  shape: rectangle
+}
+d2: Official D2 CLI
+artifact: {
+  label: SVG / PNG artifact
+  shape: document
+}
+guardrails: {
+  label: "Typed schemas\nPath limits\nTimeouts\nRemote assets off"
+  shape: page
+}
+
+user -> agent: request
+agent -> server: validate or render
+server -> guardrails: enforce policy
+server -> d2: bounded command
+d2 -> artifact: write file
+server -> agent: report
+agent -> user: final artifact

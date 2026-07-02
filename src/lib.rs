@@ -23,6 +23,7 @@ const DEFAULT_TIMEOUT_SECONDS: u64 = 20;
 const MAX_TIMEOUT_SECONDS: u64 = 120;
 const MAX_DIAGNOSTIC_BYTES: usize = 32 * 1024;
 const MAX_INLINE_SVG_BYTES: usize = 256 * 1024;
+const MAX_D2_THEME_ID: i64 = 303;
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -39,6 +40,22 @@ pub struct D2StatusReport {
     pub remote_assets_default: RemoteAssetPolicy,
     pub reads_arbitrary_files: bool,
     pub writes_outside_workdir: bool,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct D2CliListReport {
+    pub status: D2CliListStatus,
+    pub command: String,
+    pub elapsed_ms: i64,
+    pub d2_version: Option<String>,
+    pub items_text: String,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum D2CliListStatus {
+    Listed,
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -203,6 +220,14 @@ pub fn d2_status() -> D2StatusReport {
         reads_arbitrary_files: false,
         writes_outside_workdir: false,
     }
+}
+
+pub fn list_d2_layouts() -> Result<D2CliListReport, D2McpError> {
+    list_d2_cli_items("layout")
+}
+
+pub fn list_d2_themes() -> Result<D2CliListReport, D2McpError> {
+    list_d2_cli_items("themes")
 }
 
 pub fn validate_d2(args: D2ValidateArgs) -> Result<D2ValidateReport, D2McpError> {
@@ -423,18 +448,18 @@ fn contains_remote_asset_reference(source: &str) -> bool {
 
 fn validate_render_args(args: &D2RenderArgs) -> Result<(), D2McpError> {
     if let Some(theme) = args.theme
-        && !(0..=300).contains(&theme)
+        && !(0..=MAX_D2_THEME_ID).contains(&theme)
     {
-        return Err(D2McpError::InvalidInput(
-            "theme must be between 0 and 300".to_string(),
-        ));
+        return Err(D2McpError::InvalidInput(format!(
+            "theme must be between 0 and {MAX_D2_THEME_ID}"
+        )));
     }
     if let Some(dark_theme) = args.dark_theme
-        && !(-1..=300).contains(&dark_theme)
+        && !(-1..=MAX_D2_THEME_ID).contains(&dark_theme)
     {
-        return Err(D2McpError::InvalidInput(
-            "dark_theme must be between -1 and 300".to_string(),
-        ));
+        return Err(D2McpError::InvalidInput(format!(
+            "dark_theme must be between -1 and {MAX_D2_THEME_ID}"
+        )));
     }
     if let Some(pad) = args.pad
         && !(0..=1000).contains(&pad)
@@ -600,6 +625,26 @@ fn d2_version(binary: &str) -> Option<String> {
     }
 }
 
+fn list_d2_cli_items(subcommand: &str) -> Result<D2CliListReport, D2McpError> {
+    let config = D2Config::from_env();
+    let start = std::time::Instant::now();
+    let output = run_d2(
+        CommandSpec::new(&config.d2_binary)
+            .arg(subcommand)
+            .timeout(Duration::from_secs(10)),
+    )?;
+    if !output.exit_success {
+        return Err(D2McpError::D2Failed(diagnostics_from(&output)));
+    }
+    Ok(D2CliListReport {
+        status: D2CliListStatus::Listed,
+        command: format!("d2 {subcommand}"),
+        elapsed_ms: u128_to_i64(start.elapsed().as_millis()),
+        d2_version: d2_version(&config.d2_binary),
+        items_text: diagnostics_from(&output),
+    })
+}
+
 fn diagnostics_from(output: &CommandOutput) -> String {
     let mut diagnostic = String::new();
     if !output.stdout.is_empty() {
@@ -713,5 +758,44 @@ mod tests {
             path,
             Path::new("/tmp/work/.d2-mcp-output/0123456789abcdef.png")
         );
+    }
+
+    #[test]
+    fn accepts_current_d2_theme_ids() {
+        validate_render_args(&D2RenderArgs {
+            source: "a -> b".to_string(),
+            format: D2OutputFormat::Svg,
+            output_path: None,
+            overwrite: false,
+            inline_svg: false,
+            allow_remote_assets: false,
+            theme: Some(MAX_D2_THEME_ID),
+            dark_theme: Some(MAX_D2_THEME_ID),
+            layout: None,
+            sketch: false,
+            pad: None,
+            timeout_seconds: None,
+        })
+        .expect("current D2 theme id range accepted");
+    }
+
+    #[test]
+    fn rejects_theme_ids_above_current_d2_range() {
+        let err = validate_render_args(&D2RenderArgs {
+            source: "a -> b".to_string(),
+            format: D2OutputFormat::Svg,
+            output_path: None,
+            overwrite: false,
+            inline_svg: false,
+            allow_remote_assets: false,
+            theme: Some(MAX_D2_THEME_ID + 1),
+            dark_theme: None,
+            layout: None,
+            sketch: false,
+            pad: None,
+            timeout_seconds: None,
+        })
+        .expect_err("out-of-range theme rejected");
+        assert!(err.to_string().contains("theme must be between"));
     }
 }

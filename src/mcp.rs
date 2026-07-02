@@ -6,8 +6,9 @@ use rmcp::{
 };
 
 use crate::{
-    D2FormatArgs, D2FormatReport, D2McpError, D2RenderArgs, D2RenderReport, D2StatusReport,
-    D2ValidateArgs, D2ValidateReport, d2_status, format_d2, render_d2, validate_d2,
+    D2CliListReport, D2FormatArgs, D2FormatReport, D2McpError, D2RenderArgs, D2RenderReport,
+    D2StatusReport, D2ValidateArgs, D2ValidateReport, d2_status, format_d2, list_d2_layouts,
+    list_d2_themes, render_d2, validate_d2,
 };
 
 #[derive(Debug, Clone)]
@@ -29,6 +30,38 @@ impl D2McpServer {
     )]
     fn d2_status(&self) -> Json<D2StatusReport> {
         Json(d2_status())
+    }
+
+    #[tool(
+        name = "d2_layouts",
+        title = "List D2 Layout Engines",
+        description = "List layout engines available to the configured D2 CLI. This helps agents choose a valid layout without shell access.",
+        annotations(
+            title = "List D2 Layout Engines",
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
+    )]
+    fn d2_layouts(&self) -> Result<Json<D2CliListReport>, ErrorData> {
+        list_d2_layouts().map(Json).map_err(error_data)
+    }
+
+    #[tool(
+        name = "d2_themes",
+        title = "List D2 Themes",
+        description = "List themes available to the configured D2 CLI. This helps agents choose a valid theme without shell access.",
+        annotations(
+            title = "List D2 Themes",
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
+    )]
+    fn d2_themes(&self) -> Result<Json<D2CliListReport>, ErrorData> {
+        list_d2_themes().map(Json).map_err(error_data)
     }
 
     #[tool(
