@@ -18,7 +18,11 @@ impl ClientHandler for SmokeClient {
 
 #[tokio::test]
 async fn d2_mcp_surface_smoke() -> anyhow::Result<()> {
-    if std::process::Command::new("d2").arg("--version").output().is_err() {
+    if std::process::Command::new("d2")
+        .arg("--version")
+        .output()
+        .is_err()
+    {
         eprintln!("skipping d2 MCP smoke because d2 binary is not installed");
         return Ok(());
     }
@@ -44,10 +48,16 @@ async fn d2_mcp_surface_smoke() -> anyhow::Result<()> {
     assert!(tool_names.contains(&"d2_render"));
 
     for tool in &tools.tools {
-        assert!(tool.output_schema.is_some(), "{} must expose outputSchema", tool.name);
+        assert!(
+            tool.output_schema.is_some(),
+            "{} must expose outputSchema",
+            tool.name
+        );
     }
 
-    let status = client.call_tool(CallToolRequestParams::new("d2_status")).await?;
+    let status = client
+        .call_tool(CallToolRequestParams::new("d2_status"))
+        .await?;
     assert_eq!(status.is_error, Some(false));
     let status_body = structured(&status);
     assert_eq!(status_body["status"], "ready");
@@ -55,13 +65,15 @@ async fn d2_mcp_surface_smoke() -> anyhow::Result<()> {
     assert_eq!(status_body["writes_outside_workdir"], false);
 
     let render = client
-        .call_tool(CallToolRequestParams::new("d2_render").with_arguments(arguments(json!({
-            "source": "client -> d2_mcp -> svg",
-            "format": "svg",
-            "output_path": ".d2-mcp-test/smoke.svg",
-            "overwrite": true,
-            "inline_svg": true
-        }))))
+        .call_tool(
+            CallToolRequestParams::new("d2_render").with_arguments(arguments(json!({
+                "source": "client -> d2_mcp -> svg",
+                "format": "svg",
+                "output_path": ".d2-mcp-test/smoke.svg",
+                "overwrite": true,
+                "inline_svg": true
+            }))),
+        )
         .await?;
     assert_eq!(render.is_error, Some(false));
     let render_body = structured(&render);
@@ -69,15 +81,22 @@ async fn d2_mcp_surface_smoke() -> anyhow::Result<()> {
     assert_eq!(render_body["format"], "svg");
     assert_eq!(render_body["output_path"], ".d2-mcp-test/smoke.svg");
     assert!(render_body["output_bytes"].as_i64().unwrap_or_default() > 1000);
-    assert!(render_body["inline_svg"].as_str().unwrap_or_default().contains("<svg"));
+    assert!(
+        render_body["inline_svg"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("<svg")
+    );
     assert!(output_dir.join("smoke.svg").is_file());
 
     let escaped = client
-        .call_tool(CallToolRequestParams::new("d2_render").with_arguments(arguments(json!({
-            "source": "a -> b",
-            "format": "svg",
-            "output_path": "../escape.svg"
-        }))))
+        .call_tool(
+            CallToolRequestParams::new("d2_render").with_arguments(arguments(json!({
+                "source": "a -> b",
+                "format": "svg",
+                "output_path": "../escape.svg"
+            }))),
+        )
         .await;
     assert!(escaped.is_err());
 
@@ -92,5 +111,8 @@ fn arguments(value: Value) -> serde_json::Map<String, Value> {
 }
 
 fn structured(result: &rmcp::model::CallToolResult) -> &Value {
-    result.structured_content.as_ref().expect("structured tool response")
+    result
+        .structured_content
+        .as_ref()
+        .expect("structured tool response")
 }

@@ -25,6 +25,12 @@ jobs:
           curl -fsSL https://d2lang.com/install.sh | sh -s --
           d2 --version
 
+      - name: Tool Versions
+        run: |
+          rustc --version
+          cargo fmt --version
+          cargo clippy --version
+
       - name: Format
         run: cargo fmt --check
 

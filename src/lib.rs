@@ -212,13 +212,19 @@ pub fn validate_d2(args: D2ValidateArgs) -> Result<D2ValidateReport, D2McpError>
     let mut input = source_tempfile(&args.source)?;
     let start = std::time::Instant::now();
     let output = run_d2(
-        CommandSpec::new(&config.d2_binary).arg("validate").arg(input.path()).timeout(timeout),
+        CommandSpec::new(&config.d2_binary)
+            .arg("validate")
+            .arg(input.path())
+            .timeout(timeout),
     )?;
     input.flush()?;
 
     let diagnostics = diagnostics_from(&output);
-    let status =
-        if output.exit_success { D2ValidationStatus::Valid } else { D2ValidationStatus::Invalid };
+    let status = if output.exit_success {
+        D2ValidationStatus::Valid
+    } else {
+        D2ValidationStatus::Invalid
+    };
 
     Ok(D2ValidateReport {
         status,
@@ -236,8 +242,12 @@ pub fn format_d2(args: D2FormatArgs) -> Result<D2FormatReport, D2McpError> {
     let timeout = timeout_from_args(args.timeout_seconds)?;
     let input = source_tempfile(&args.source)?;
     let start = std::time::Instant::now();
-    let output =
-        run_d2(CommandSpec::new(&config.d2_binary).arg("fmt").arg(input.path()).timeout(timeout))?;
+    let output = run_d2(
+        CommandSpec::new(&config.d2_binary)
+            .arg("fmt")
+            .arg(input.path())
+            .timeout(timeout),
+    )?;
     if !output.exit_success {
         return Err(D2McpError::D2Failed(diagnostics_from(&output)));
     }
@@ -288,7 +298,11 @@ pub fn render_d2(args: D2RenderArgs) -> Result<D2RenderReport, D2McpError> {
         .arg(args.format.cli_value())
         .arg("--timeout")
         .arg(timeout.as_secs().to_string())
-        .timeout(timeout.checked_add(Duration::from_secs(2)).unwrap_or(timeout));
+        .timeout(
+            timeout
+                .checked_add(Duration::from_secs(2))
+                .unwrap_or(timeout),
+        );
     if let Some(theme) = args.theme {
         spec = spec.arg("--theme").arg(theme.to_string());
     }
@@ -411,22 +425,30 @@ fn validate_render_args(args: &D2RenderArgs) -> Result<(), D2McpError> {
     if let Some(theme) = args.theme
         && !(0..=300).contains(&theme)
     {
-        return Err(D2McpError::InvalidInput("theme must be between 0 and 300".to_string()));
+        return Err(D2McpError::InvalidInput(
+            "theme must be between 0 and 300".to_string(),
+        ));
     }
     if let Some(dark_theme) = args.dark_theme
         && !(-1..=300).contains(&dark_theme)
     {
-        return Err(D2McpError::InvalidInput("dark_theme must be between -1 and 300".to_string()));
+        return Err(D2McpError::InvalidInput(
+            "dark_theme must be between -1 and 300".to_string(),
+        ));
     }
     if let Some(pad) = args.pad
         && !(0..=1000).contains(&pad)
     {
-        return Err(D2McpError::InvalidInput("pad must be between 0 and 1000".to_string()));
+        return Err(D2McpError::InvalidInput(
+            "pad must be between 0 and 1000".to_string(),
+        ));
     }
     if let Some(layout) = args.layout.as_deref()
         && (layout.is_empty()
             || layout.len() > 32
-            || !layout.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_'))
+            || !layout
+                .chars()
+                .all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_'))
     {
         return Err(D2McpError::InvalidInput(
             "layout must be 1-32 chars and contain only ASCII letters, digits, '-' or '_'"
@@ -476,20 +498,24 @@ fn validate_relative_path(path: &Path) -> Result<(), D2McpError> {
     }
     for component in path.components() {
         match component {
-            Component::Normal(_) => {},
-            Component::CurDir => {},
+            Component::Normal(_) => {}
+            Component::CurDir => {}
             Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
                 return Err(D2McpError::InvalidInput(
                     "output_path must be relative and stay inside D2_MCP_WORKDIR".to_string(),
                 ));
-            },
+            }
         }
     }
     Ok(())
 }
 
 fn relative_display(workdir: &Path, output_path: &Path) -> String {
-    output_path.strip_prefix(workdir).unwrap_or(output_path).display().to_string()
+    output_path
+        .strip_prefix(workdir)
+        .unwrap_or(output_path)
+        .display()
+        .to_string()
 }
 
 #[derive(Debug)]
@@ -543,24 +569,35 @@ fn run_d2(spec: CommandSpec) -> Result<CommandOutput, D2McpError> {
                 stdout: output.stdout,
                 stderr: output.stderr,
             })
-        },
+        }
         None => {
             let _ = child.kill();
             let _ = child.wait();
-            Err(D2McpError::Timeout(format!("d2 exceeded {}s timeout", spec.timeout.as_secs())))
-        },
+            Err(D2McpError::Timeout(format!(
+                "d2 exceeded {}s timeout",
+                spec.timeout.as_secs()
+            )))
+        }
     }
 }
 
 fn d2_version(binary: &str) -> Option<String> {
-    let output =
-        run_d2(CommandSpec::new(binary).arg("--version").timeout(Duration::from_secs(5))).ok()?;
+    let output = run_d2(
+        CommandSpec::new(binary)
+            .arg("--version")
+            .timeout(Duration::from_secs(5)),
+    )
+    .ok()?;
     if !output.exit_success {
         return None;
     }
     let text = String::from_utf8_lossy(&output.stdout);
     let version = text.trim();
-    if version.is_empty() { None } else { Some(version.to_string()) }
+    if version.is_empty() {
+        None
+    } else {
+        Some(version.to_string())
+    }
 }
 
 fn diagnostics_from(output: &CommandOutput) -> String {
@@ -672,6 +709,9 @@ mod tests {
             "0123456789abcdef9999",
         )
         .expect("default output path");
-        assert_eq!(path, Path::new("/tmp/work/.d2-mcp-output/0123456789abcdef.png"));
+        assert_eq!(
+            path,
+            Path::new("/tmp/work/.d2-mcp-output/0123456789abcdef.png")
+        );
     }
 }
