@@ -9,6 +9,15 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # Breaking upgrades are intentional migrations, not unattended bumps.
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+      # Cargo treats 0.10 -> 0.11 as minor even though it may break APIs.
+      - dependency-name: sha2
+        update-types:
+          - version-update:semver-minor
 
   - package-ecosystem: github-actions
     directory: /
