@@ -48,7 +48,10 @@ d2 --version
 Install the MCP server from GitHub:
 
 ```bash
-cargo install --git https://github.com/Stranmor/d2-mcp-rs.git d2-mcp
+cargo install --locked \
+  --git https://github.com/Stranmor/d2-mcp-rs.git \
+  --tag v0.1.0 \
+  d2-mcp
 ```
 
 Create an output directory:

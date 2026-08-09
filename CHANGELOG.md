@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-09
+
 ### Added
 
 - `d2_layouts` MCP tool for discovering available D2 layout engines.
@@ -21,3 +23,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Verified
 
 - CI runs `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, and `cargo test` with D2 installed.
+
+[Unreleased]: https://github.com/Stranmor/d2-mcp-rs/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Stranmor/d2-mcp-rs/releases/tag/v0.1.0

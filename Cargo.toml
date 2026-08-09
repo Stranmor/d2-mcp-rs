@@ -2,7 +2,7 @@
 name = "d2-mcp"
 version = "0.1.0"
 edition = "2024"
-description = "Production-grade Rust MCP server for validating, formatting, and rendering D2 diagrams."
+description = "Rust MCP server for bounded validation, formatting, and rendering of D2 diagrams"
 license = "MIT"
 repository = "https://github.com/Stranmor/d2-mcp-rs"
 readme = "README.md"
