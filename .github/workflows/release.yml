@@ -56,7 +56,10 @@ jobs:
           install -m755 target/release/d2-mcp "dist/${root}/bin/d2-mcp"
           install -m644 README.md CHANGELOG.md LICENSE "dist/${root}/"
           tar -C dist -czf "dist/${root}.tar.gz" "${root}"
-          sha256sum "dist/${root}.tar.gz" > "dist/${root}.tar.gz.sha256"
+          (
+            cd dist
+            sha256sum "${root}.tar.gz" > "${root}.tar.gz.sha256"
+          )
           rm -rf -- "dist/${root}"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
